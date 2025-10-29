@@ -28,9 +28,9 @@ $defaults = [
     'plesk' => [
         // Remplacez ces valeurs par celles fournies par Plesk (ou définissez les variables d'environnement)
         'db_host' => env_var('DB_HOST', 'localhost'),
-        'db_name' => env_var('DB_NAME', 'memory'),
-        'db_user' => env_var('DB_USER', 'your_plesk_db_user'),
-        'db_pass' => env_var('DB_PASS', 'your_plesk_db_password'),
+        'db_name' => env_var('DB_NAME', 'sadio-kanoute_memory'),
+        'db_user' => env_var('DB_USER', 'sadio-kanoute'),
+        'db_pass' => env_var('DB_PASS', 'Adama@1974@'),
         'db_charset' => env_var('DB_CHARSET', 'utf8mb4'),
     ],
 ];
