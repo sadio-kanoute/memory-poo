@@ -1,2 +1,2 @@
-# Ignore local config containing secrets
-config.local.php
+# Ignore server Plesk config containing secrets (user requested to ignore plesk config)
+config.plesk.php

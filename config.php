@@ -13,8 +13,20 @@ function env_var(string $name, $default = null)
     return $default;
 }
 
-// Détermine l'environnement : 'local' (par défaut) ou 'plesk' si APP_ENV=plesk
-$appEnv = strtolower((string) env_var('APP_ENV', 'local'));
+// Détermine l'environnement : priorité à APP_ENV. Sinon détection automatique
+$appEnv = env_var('APP_ENV', null);
+if ($appEnv !== null) {
+    $appEnv = strtolower((string) $appEnv);
+} else {
+    // auto-detect via host or CLI: localhost/127.0.0.1/::1 => local, sinon plesk
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? php_uname('n');
+    $isCli = (php_sapi_name() === 'cli');
+    if ($isCli || preg_match('/(^|\.)localhost$|127\.0\.0\.1|::1/i', $host)) {
+        $appEnv = 'local';
+    } else {
+        $appEnv = 'plesk';
+    }
+}
 
 // Valeurs par défaut pour chaque environnement
 $defaults = [
@@ -41,10 +53,20 @@ $cfg = $defaults[$appEnv] ?? $defaults['local'];
 
 // Si un fichier local existe (non versionné), il peut fournir les credentials
 $localFile = __DIR__ . '/config.local.php';
-if (file_exists($localFile)) {
+// Charger le fichier local uniquement si on est en environnement 'local'.
+if ($appEnv === 'local' && file_exists($localFile)) {
     $localCfg = include $localFile;
     if (is_array($localCfg)) {
         $cfg = array_merge($cfg, $localCfg);
+    }
+}
+
+// Charger un fichier de configuration Plesk uniquement en environnement 'plesk'.
+$pleskFile = __DIR__ . '/config.plesk.php';
+if ($appEnv === 'plesk' && file_exists($pleskFile)) {
+    $pleskCfg = include $pleskFile;
+    if (is_array($pleskCfg)) {
+        $cfg = array_merge($cfg, $pleskCfg);
     }
 }
 
