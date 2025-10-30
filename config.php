@@ -5,12 +5,14 @@
 /**
  * Récupère une variable d'environnement ou $_SERVER, sinon retourne la valeur par défaut.
  */
-function env_var(string $name, $default = null)
-{
-    $v = getenv($name);
-    if ($v !== false) return $v;
-    if (isset($_SERVER[$name])) return $_SERVER[$name];
-    return $default;
+if (!function_exists('env_var')) {
+    function env_var(string $name, $default = null)
+    {
+        $v = getenv($name);
+        if ($v !== false) return $v;
+        if (isset($_SERVER[$name])) return $_SERVER[$name];
+        return $default;
+    }
 }
 
 // Détermine l'environnement : priorité à APP_ENV. Sinon détection automatique

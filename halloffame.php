@@ -2,13 +2,12 @@
 // Page affichant le top 10 (meilleurs scores = plus petit score)
 $cfg = require __DIR__ . '/config.php';
 try{
-    $dsn = "mysql:host={$cfg['db_host']};dbname={$cfg['db_name']};charset={$cfg['db_charset']}";
-    $pdo = new PDO($dsn, $cfg['db_user'], $cfg['db_pass'], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-    $stmt = $pdo->query('SELECT p.username, s.pairs, s.moves, s.score, s.created_at FROM scores s JOIN players p ON s.player_id = p.id ORDER BY s.score ASC, s.created_at ASC LIMIT 10');
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $pdo = new PDO($cfg['dsn'], $cfg['db_user'], $cfg['db_pass'], $cfg['pdo_options']);
+  $stmt = $pdo->query('SELECT p.username, s.pairs, s.moves, s.score, s.created_at FROM scores s JOIN players p ON s.player_id = p.id ORDER BY s.score ASC, s.created_at ASC LIMIT 10');
+  $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }catch(Exception $e){
-    $rows = [];
-    $errorMsg = $e->getMessage();
+  $rows = [];
+  $errorMsg = $e->getMessage();
 }
 ?>
 <!doctype html>

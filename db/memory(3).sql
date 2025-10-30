@@ -53,9 +53,62 @@ CREATE TABLE IF NOT EXISTS `players` (
   `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
   `username` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `password_hash` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `avatar` varchar(255) DEFAULT NULL,
+  `is_verified` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Ensure compatibility on older installs: add missing columns if they don't exist
+-- MySQL older versions may not support `ADD COLUMN IF NOT EXISTS`, so we
+-- conditionally run ALTER TABLE statements using INFORMATION_SCHEMA and
+-- dynamic SQL (PREPARE/EXECUTE). This is more portable across versions.
+
+-- password_hash
+SET @s = (
+  SELECT IF(COUNT(*)=0,
+    'ALTER TABLE `players` ADD COLUMN `password_hash` varchar(255) DEFAULT NULL;',
+    'SELECT "password_hash exists";'
+  )
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'players' AND COLUMN_NAME = 'password_hash'
+);
+PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- email
+SET @s = (
+  SELECT IF(COUNT(*)=0,
+    'ALTER TABLE `players` ADD COLUMN `email` varchar(255) DEFAULT NULL;',
+    'SELECT "email exists";'
+  )
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'players' AND COLUMN_NAME = 'email'
+);
+PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- avatar
+SET @s = (
+  SELECT IF(COUNT(*)=0,
+    'ALTER TABLE `players` ADD COLUMN `avatar` varchar(255) DEFAULT NULL;',
+    'SELECT "avatar exists";'
+  )
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'players' AND COLUMN_NAME = 'avatar'
+);
+PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- is_verified
+SET @s = (
+  SELECT IF(COUNT(*)=0,
+    'ALTER TABLE `players` ADD COLUMN `is_verified` tinyint(1) NOT NULL DEFAULT 0;',
+    'SELECT "is_verified exists";'
+  )
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'players' AND COLUMN_NAME = 'is_verified'
+);
+PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- --------------------------------------------------------
 
