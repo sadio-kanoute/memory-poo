@@ -1,5 +1,6 @@
 <?php
-session_start();
+// Load config (starts session)
+$cfg = require __DIR__ . '/config.php';
 // page de jeu : frontend en JS, sauvegarde via save_score.php
 $username = $_SESSION['username'] ?? '';
 ?>

@@ -1,5 +1,5 @@
 <?php
-session_start();
+$cfg = require __DIR__ . '/config.php';
 ?>
 <!doctype html>
 <html lang="fr">

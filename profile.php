@@ -1,25 +1,25 @@
 <?php
-session_start();
+// Load central config (this starts the session with proper cookie params)
+$cfg = require __DIR__ . '/config.php';
 
 // CSRF helpers
 function csrf_token()
 {
-  if (empty($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(16));
-  }
-  return $_SESSION['csrf'];
+    if (empty($_SESSION['csrf'])) {
+        $_SESSION['csrf'] = bin2hex(random_bytes(16));
+    }
+    return $_SESSION['csrf'];
 }
 function verify_csrf($token)
 {
-  return isset($_SESSION['csrf']) && hash_equals($_SESSION['csrf'], (string)$token);
+    return isset($_SESSION['csrf']) && hash_equals($_SESSION['csrf'], (string)$token);
 }
 
-$cfg = require __DIR__ . '/config.php';
 $pdo = null;
 try{
-  $pdo = new PDO($cfg['dsn'], $cfg['db_user'], $cfg['db_pass'], $cfg['pdo_options']);
+    $pdo = new PDO($cfg['dsn'], $cfg['db_user'], $cfg['db_pass'], $cfg['pdo_options']);
 }catch(Exception $e){
-  $pdo = null;
+    $pdo = null;
 }
 
 $error = '';
@@ -28,65 +28,65 @@ $player_id = $_SESSION['player_id'] ?? null;
 
 // Handle POST actions: register, login, logout
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
-  $action = $_POST['action'] ?? '';
-  if(!verify_csrf($_POST['csrf'] ?? '')){
-    $error = 'Jeton CSRF invalide.';
-  } else {
-    if($action === 'logout'){
-      session_unset(); session_destroy(); header('Location: profile.php'); exit;
-    }
-    if(!$pdo){ $error = 'Impossible de se connecter à la base.'; }
-    else {
-      if($action === 'register'){
-        $name = trim($_POST['username'] ?? '');
-        $pass = $_POST['password'] ?? '';
-        if($name === ''){ $error = 'Pseudo requis.'; }
-        elseif($pass === ''){ $error = 'Mot de passe requis.'; }
-        else {
-          // check exists
-          $stmt = $pdo->prepare('SELECT id, password_hash FROM players WHERE username = :u');
-          $stmt->execute([':u'=>$name]);
-          $row = $stmt->fetch(PDO::FETCH_ASSOC);
-          if($row){
-            $error = 'Pseudo déjà utilisé.';
-          } else {
-            $pwdHash = password_hash($pass, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('INSERT INTO players (username,password_hash) VALUES (:u,:ph)');
-            $stmt->execute([':u'=>$name,':ph'=>$pwdHash]);
-            $pid = $pdo->lastInsertId();
-            session_regenerate_id(true);
-            $_SESSION['player_id'] = $pid;
-            $_SESSION['username'] = $name;
-            header('Location: profile.php'); exit;
-          }
+    $action = $_POST['action'] ?? '';
+    if(!verify_csrf($_POST['csrf'] ?? '')){
+        $error = 'Jeton CSRF invalide.';
+    } else {
+        if($action === 'logout'){
+            session_unset(); session_destroy(); header('Location: profile.php'); exit;
         }
-      } elseif($action === 'login'){
-        $name = trim($_POST['username'] ?? '');
-        $pass = $_POST['password'] ?? '';
-        if($name === ''){ $error = 'Pseudo requis.'; }
+        if(!$pdo){ $error = 'Impossible de se connecter à la base.'; }
         else {
-          $stmt = $pdo->prepare('SELECT id,password_hash FROM players WHERE username = :u');
-          $stmt->execute([':u'=>$name]);
-          $row = $stmt->fetch(PDO::FETCH_ASSOC);
-          if(!$row){
-            $error = 'Utilisateur non trouvé.';
-          } else {
-            $hash = $row['password_hash'];
-            if(!$hash){
-              $error = 'Ce compte nécessite un mot de passe. Veuillez réinitialiser votre mot de passe via l\'administration.';
-            } elseif(!password_verify($pass, $hash)){
-              $error = 'Mot de passe incorrect.';
-            } else {
-              session_regenerate_id(true);
-              $_SESSION['player_id'] = $row['id'];
-              $_SESSION['username'] = $name;
-              header('Location: profile.php'); exit;
+            if($action === 'register'){
+                $name = trim($_POST['username'] ?? '');
+                $pass = $_POST['password'] ?? '';
+                if($name === ''){ $error = 'Pseudo requis.'; }
+                elseif($pass === ''){ $error = 'Mot de passe requis.'; }
+                else {
+                    // check exists
+                    $stmt = $pdo->prepare('SELECT id, password_hash FROM players WHERE username = :u');
+                    $stmt->execute([':u'=>$name]);
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if($row){
+                        $error = 'Pseudo déjà utilisé.';
+                    } else {
+                        $pwdHash = password_hash($pass, PASSWORD_DEFAULT);
+                        $stmt = $pdo->prepare('INSERT INTO players (username,password_hash) VALUES (:u,:ph)');
+                        $stmt->execute([':u'=>$name,':ph'=>$pwdHash]);
+                        $pid = $pdo->lastInsertId();
+                        session_regenerate_id(true);
+                        $_SESSION['player_id'] = $pid;
+                        $_SESSION['username'] = $name;
+                        header('Location: profile.php'); exit;
+                    }
+                }
+            } elseif($action === 'login'){
+                $name = trim($_POST['username'] ?? '');
+                $pass = $_POST['password'] ?? '';
+                if($name === ''){ $error = 'Pseudo requis.'; }
+                else {
+                    $stmt = $pdo->prepare('SELECT id,password_hash FROM players WHERE username = :u');
+                    $stmt->execute([':u'=>$name]);
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if(!$row){
+                        $error = 'Utilisateur non trouvé.';
+                    } else {
+                        $hash = $row['password_hash'];
+                        if(!$hash){
+                            $error = 'Ce compte nécessite un mot de passe. Veuillez réinitialiser votre mot de passe via l\'administration.';
+                        } elseif(!password_verify($pass, $hash)){
+                            $error = 'Mot de passe incorrect.';
+                        } else {
+                            session_regenerate_id(true);
+                            $_SESSION['player_id'] = $row['id'];
+                            $_SESSION['username'] = $name;
+                            header('Location: profile.php'); exit;
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
-  }
 }
 ?>
 <!doctype html>

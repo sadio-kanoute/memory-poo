@@ -1,6 +1,6 @@
 <?php
 // Endpoint pour sauvegarder un score envoyé depuis le client (fetch)
-session_start();
+$cfg = require __DIR__ . '/config.php';
 header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
 if(!$data){ http_response_code(400); echo json_encode(['error'=>'Invalid request']); exit; }

@@ -15,6 +15,34 @@ if (!function_exists('env_var')) {
     }
 }
 
+// Configure session cookie parameters consistently and start the session if needed.
+// This ensures CSRF tokens survive across requests on different environments.
+$secure = (
+    (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') ||
+    (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+);
+$cookieDomain = $_SERVER['HTTP_HOST'] ?? '';
+$cookieParams = [
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => $cookieDomain,
+    'secure' => $secure,
+    'httponly' => true,
+    'samesite' => 'Lax',
+];
+// Use array form when available (PHP 7.3+), fallback otherwise.
+if (PHP_VERSION_ID >= 70300) {
+    session_set_cookie_params($cookieParams);
+} else {
+    // older signature: lifetime, path, domain, secure, httponly
+    // Append samesite in the path for older PHP versions
+    $path = $cookieParams['path'] . '; samesite=' . $cookieParams['samesite'];
+    session_set_cookie_params($cookieParams['lifetime'], $path, $cookieParams['domain'], $cookieParams['secure'], $cookieParams['httponly']);
+}
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Détermine l'environnement : priorité à APP_ENV. Sinon détection automatique
 $appEnv = env_var('APP_ENV', null);
 if ($appEnv !== null) {
