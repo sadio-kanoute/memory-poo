@@ -41,6 +41,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         $name = trim($_POST['username'] ?? '');
         $pass = $_POST['password'] ?? '';
         if($name === ''){ $error = 'Pseudo requis.'; }
+        elseif($pass === ''){ $error = 'Mot de passe requis.'; }
         else {
           // check exists
           $stmt = $pdo->prepare('SELECT id, password_hash FROM players WHERE username = :u');
@@ -49,7 +50,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
           if($row){
             $error = 'Pseudo déjà utilisé.';
           } else {
-            $pwdHash = $pass !== '' ? password_hash($pass, PASSWORD_DEFAULT) : null;
+            $pwdHash = password_hash($pass, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare('INSERT INTO players (username,password_hash) VALUES (:u,:ph)');
             $stmt->execute([':u'=>$name,':ph'=>$pwdHash]);
             $pid = $pdo->lastInsertId();
@@ -71,10 +72,11 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             $error = 'Utilisateur non trouvé.';
           } else {
             $hash = $row['password_hash'];
-            if($hash && !password_verify($pass, $hash)){
+            if(!$hash){
+              $error = 'Ce compte nécessite un mot de passe. Veuillez réinitialiser votre mot de passe via l\'administration.';
+            } elseif(!password_verify($pass, $hash)){
               $error = 'Mot de passe incorrect.';
             } else {
-              // allow login for accounts without password (legacy) if none provided
               session_regenerate_id(true);
               $_SESSION['player_id'] = $row['id'];
               $_SESSION['username'] = $name;
@@ -147,8 +149,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             <input type="hidden" name="action" value="register" />
             <label for="r_username">Pseudo :</label>
             <input id="r_username" name="username" required />
-            <label for="r_password">Mot de passe (optionnel) :</label>
-            <input id="r_password" name="password" type="password" />
+            <label for="r_password">Mot de passe :</label>
+            <input id="r_password" name="password" type="password" required />
             <button type="submit" class="btn primary">S'inscrire</button>
           </form>
 
@@ -159,7 +161,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
             <label for="l_username">Pseudo :</label>
             <input id="l_username" name="username" required />
             <label for="l_password">Mot de passe :</label>
-            <input id="l_password" name="password" type="password" />
+            <input id="l_password" name="password" type="password" required />
             <button type="submit" class="btn">Se connecter</button>
           </form>
         </div>
